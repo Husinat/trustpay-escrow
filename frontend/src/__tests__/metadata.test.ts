@@ -54,10 +54,10 @@ describe('Project Dynamic SEO Metadata (Issue #170)', () => {
 
     // Twitter Card tags
     expect(metadata.twitter).toBeDefined();
-    expect(metadata.twitter?.card).toBe('summary_large_image');
-    expect(metadata.twitter?.title).toBe('[1500 USDC] Build Stellar Smart Escrow | TrustPay Escrow');
-    expect(metadata.twitter?.description).toContain('Implement automated Soroban escrow');
-    const twitterImages = metadata.twitter?.images as Array<string>;
+    expect((metadata.twitter as any)?.card).toBe('summary_large_image');
+    expect((metadata.twitter as any)?.title).toBe('[1500 USDC] Build Stellar Smart Escrow | TrustPay Escrow');
+    expect((metadata.twitter as any)?.description).toContain('Implement automated Soroban escrow');
+    const twitterImages = (metadata.twitter as any)?.images as Array<string>;
     expect(twitterImages[0]).toContain('/api/og');
   });
 
@@ -68,14 +68,14 @@ describe('Project Dynamic SEO Metadata (Issue #170)', () => {
       json: async () => ({ error: 'Project not found' }),
     } as any);
 
-    const metadata = await generateMetadata({
-      params: Promise.resolve({ id: 'non-existent-999' }),
-    });
+  const metadata = await generateMetadata({
+    params: Promise.resolve({ id: 'non-existent-999' }),
+  });
 
     expect(metadata.title).toBe('Project Not Found | TrustPay Escrow');
     expect(metadata.description).toContain('The requested escrow project could not be found');
     expect(metadata.openGraph?.title).toBe('Project Not Found | TrustPay Escrow');
-    expect(metadata.twitter?.card).toBe('summary_large_image');
+    expect((metadata.twitter as any)?.card).toBe('summary_large_image');
   });
 
   it('generates graceful fallback metadata when network or server error occurs', async () => {
@@ -88,7 +88,7 @@ describe('Project Dynamic SEO Metadata (Issue #170)', () => {
     expect(metadata.title).toBe('Project Not Found | TrustPay Escrow');
     expect(metadata.description).toBeDefined();
     expect(metadata.openGraph?.siteName).toBe('TrustPay Escrow');
-    expect(metadata.twitter?.card).toBe('summary_large_image');
+    expect((metadata.twitter as any)?.card).toBe('summary_large_image');
   });
 
   it('truncates long descriptions to 160 characters with ellipsis', async () => {

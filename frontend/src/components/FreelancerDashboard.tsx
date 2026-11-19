@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { useWalletStore } from '@/store/walletStore';
+import { useWalletStore, canSubmitProposal } from '@/store/walletStore';
 import { authFetch } from '@/lib/api';
 
 import { Milestone, Project, Proposal } from '@/types';
@@ -15,7 +15,7 @@ import { DownloadReceiptButton } from '@/components/DownloadReceiptButton';
 
 export function FreelancerDashboard() {
   const router = useRouter();
-  const { address } = useWalletStore();
+  const { address, activeRole } = useWalletStore();
   const [activeTab, setActiveTab] = useState<'explore' | 'proposals' | 'jobs'>('explore');
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -63,6 +63,11 @@ export function FreelancerDashboard() {
 
   // Open Apply Modal and pre-fill wallet address
   const handleOpenApplyModal = (proj: Project) => {
+    const check = canSubmitProposal(proj, address, activeRole);
+    if (!check.allowed) {
+      toast.error(check.reason || 'You cannot apply to your own escrow');
+      return;
+    }
     setSelectedProject(proj);
     setProposalWalletAddress(address || '');
     setProposalCoverNote('');
@@ -97,6 +102,22 @@ export function FreelancerDashboard() {
 
   // Helper to render action button or status badge for a project
   const renderProjectActionBadge = (proj: Project, isModal = false) => {
+    const clientAddr = proj.client_address || (proj as any).client?.stellar_address || (proj as any).client;
+    const isOwnProject = Boolean(clientAddr && address && clientAddr.toLowerCase() === address.toLowerCase());
+    if (isOwnProject) {
+      return (
+        <span
+          data-testid="own-project-badge"
+          className={
+            isModal
+              ? "px-5 py-2.5 bg-[#27272a] text-[#a1a1aa] border border-[#3f3f46] text-xs font-semibold rounded-xl flex items-center gap-1.5 shadow-md cursor-not-allowed"
+              : "px-3.5 py-1.5 bg-[#27272a] text-[#a1a1aa] border border-[#3f3f46] text-xs font-semibold rounded-xl flex items-center gap-1 cursor-not-allowed"
+          }
+        >
+          <span>Owner (Client)</span>
+        </span>
+      );
+    }
     const existingProposal = proposals.find((p) => p.project_id === proj.id) ||
       (proj.applicants || []).find((a: any) => a.stellar_address === address || a.freelancer_address === address) ||
       (proj.proposals || []).find((p: any) => p.freelancer_address === address || p.stellar_address === address);
@@ -312,6 +333,12 @@ export function FreelancerDashboard() {
     }
 
     if (!selectedProject) return;
+
+    const check = canSubmitProposal(selectedProject, address, activeRole);
+    if (!check.allowed) {
+      toast.error(check.reason || 'You cannot apply to your own escrow');
+      return;
+    }
 
     setIsSubmittingProposal(true);
 
