@@ -23,6 +23,7 @@ import {
   assignFreelancerOnChain,
   getStellarExplorerUrl,
   DEFAULT_ESCROW_CONTRACT_ID,
+  showSorobanErrorToast,
 } from '@/lib/soroban';
 
 export interface ClientDashboardProps {
@@ -539,7 +540,7 @@ export function ClientDashboard({ defaultTab = 'projects' }: ClientDashboardProp
       await fetchBackendProjects();
       setActiveTab('projects');
     } catch (err: any) {
-      toast.error(err.message || 'Error saving project', { duration: 6000 });
+      showSorobanErrorToast(err);
     } finally {
       setIsSubmitting(false);
     }

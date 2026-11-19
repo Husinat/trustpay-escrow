@@ -669,3 +669,37 @@ export async function autoReleaseMilestoneOnChain(params: {
   });
 }
 
+import { decodeSorobanError, DecodedSorobanError } from './soroban-error-decoder';
+import { showSorobanErrorToast } from '@/components/SorobanErrorToast';
+
+export interface SorobanCallResult<T> {
+  success: boolean;
+  data?: T;
+  error?: DecodedSorobanError;
+}
+
+/**
+ * Executes a Soroban transaction or Freighter signing operation with automatic
+ * error interception and rich diagnostic toast reporting.
+ */
+export async function executeSorobanCall<T>(
+  actionName: string,
+  fn: () => Promise<T>
+): Promise<SorobanCallResult<T>> {
+  try {
+    const result = await fn();
+    return { success: true, data: result };
+  } catch (err: any) {
+    const decoded = decodeSorobanError(err);
+    // Automatically trigger user-friendly diagnostic toast
+    showSorobanErrorToast(err);
+    return { success: false, error: decoded };
+  }
+}
+
+/**
+ * Re-exports error decoder utilities
+ */
+export * from './soroban-error-decoder';
+export { showSorobanErrorToast } from '@/components/SorobanErrorToast';
+
